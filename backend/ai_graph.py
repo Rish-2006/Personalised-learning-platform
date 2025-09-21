@@ -1,40 +1,43 @@
-# LangGraph state machine for lesson flow
-from langgraph import StateMachine, Node, Edge, State
+# LangGraph state machine for lesson flow (updated for latest API)
+try:
+	from langgraph.graph import StateGraph, END
+except ImportError:
+	StateGraph = None
+	END = None
 
-# Define the state
-class LessonState(State):
-	user_query: str = ""
-	lesson_content: str = ""
-	quiz_score: float = 0.0
+# Define the state as a simple dict for compatibility
+class LessonState(dict):
+	pass
 
-# Define nodes
-def user_input_node(state: LessonState) -> LessonState:
-	# Placeholder: get user query (simulate or integrate with input)
-	state.user_query = "Explain photosynthesis"
+def user_input_node(state):
+	state['user_query'] = "Explain photosynthesis"
 	return state
 
-def content_generation_node(state: LessonState) -> LessonState:
-	# Placeholder: generate lesson content based on user_query
-	state.lesson_content = f"Lesson on: {state.user_query}"
+def content_generation_node(state):
+	state['lesson_content'] = f"Lesson on: {state.get('user_query', '')}"
 	return state
 
-def feedback_analyzer_node(state: LessonState) -> LessonState:
-	# Placeholder: analyze feedback and set quiz_score
-	# Simulate a quiz score (in real use, analyze actual feedback)
+def feedback_analyzer_node(state):
 	import random
-	state.quiz_score = random.uniform(0, 1)
+	state['quiz_score'] = random.uniform(0, 1)
 	return state
 
-# Build the graph
-user_input = Node(user_input_node)
-content_generation = Node(content_generation_node)
-feedback_analyzer = Node(feedback_analyzer_node)
+def quiz_score_condition(state):
+	return state.get('quiz_score', 0) < 0.7
 
-# Conditional edge: if quiz_score < 0.7, repeat content generation
-def quiz_score_condition(state: LessonState):
-	return state.quiz_score < 0.7
-
-graph = StateMachine(LessonState)
-graph.add_edge(user_input, content_generation)
-graph.add_edge(content_generation, feedback_analyzer)
-graph.add_edge(feedback_analyzer, content_generation, condition=quiz_score_condition)
+if StateGraph:
+	# Pass the state schema (LessonState) to StateGraph constructor
+	graph = StateGraph(state_schema=LessonState)
+	graph.add_node('user_input', user_input_node)
+	graph.add_node('content_generation', content_generation_node)
+	graph.add_node('feedback_analyzer', feedback_analyzer_node)
+	graph.add_edge('user_input', 'content_generation')
+	graph.add_edge('content_generation', 'feedback_analyzer')
+	# Use add_conditional_edges (plural) as per latest API
+	graph.add_conditional_edges('feedback_analyzer', {
+		'content_generation': quiz_score_condition,
+		END: lambda state: not quiz_score_condition(state)
+	})
+	graph.set_entry_point('user_input')
+else:
+	graph = None
