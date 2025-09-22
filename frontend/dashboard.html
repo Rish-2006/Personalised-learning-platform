@@ -1,97 +1,311 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>User Dashboard</title>
-	<style>
-		body {
-			margin: 0;
-			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-			background: #f4f6fb;
-			display: flex;
-			height: 100vh;
-		}
-		.sidebar {
-			width: 220px;
-			background: #2563eb;
-			color: #fff;
-			display: flex;
-			flex-direction: column;
-			padding: 2rem 1rem;
-			box-shadow: 2px 0 8px rgba(0,0,0,0.04);
-		}
-		.sidebar h2 {
-			margin: 0 0 2rem 0;
-			font-size: 1.5rem;
-			text-align: center;
-			letter-spacing: 1px;
-		}
-		.sidebar a {
-			color: #fff;
-			text-decoration: none;
-			padding: 0.8rem 1rem;
-			border-radius: 5px;
-			margin-bottom: 0.7rem;
-			font-size: 1.08rem;
-			transition: background 0.2s;
-		}
-		.sidebar a:hover {
-			background: #1e40af;
-		}
-		.main-content {
-			flex: 1;
-			padding: 2.5rem 3rem;
-			background: #f4f6fb;
-			overflow-y: auto;
-		}
-		.topics-section {
-			background: #fff;
-			border-radius: 10px;
-			box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-			padding: 2rem 1.5rem;
-			max-width: 600px;
-			margin: 0 auto;
-		}
-		.topics-section h3 {
-			margin-top: 0;
-			color: #2563eb;
-			margin-bottom: 1.2rem;
-		}
-		.topics-list {
-			list-style: none;
-			padding: 0;
-			margin: 0;
-		}
-		.topics-list li {
-			padding: 0.7rem 0.5rem;
-			border-bottom: 1px solid #e5e7eb;
-			font-size: 1.07rem;
-			color: #333;
-		}
-		.topics-list li:last-child {
-			border-bottom: none;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --sidebar-bg: #3730a3;
+            --light-bg: #f5f3ff;
+            --white: #ffffff;
+            --text-dark: #1f2937;
+            --text-light: #f9fafb;
+            --border-color: #d1d5db;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1rem;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar h2 {
+            margin: 0 0 2rem 0;
+            font-size: 1.6rem;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .sidebar a {
+            color: var(--white);
+            text-decoration: none;
+            padding: 0.9rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 0.7rem;
+            transition: background 0.2s;
+            font-size: 1.1rem;
+        }
+
+        .sidebar a:hover {
+            background: var(--sidebar-bg);
+        }
+
+        .dashboard-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .main-content {
+            flex: 3;
+            padding: 2.5rem 2rem;
+            overflow-y: auto;
+        }
+
+        .ai-assistant {
+            flex: 2;
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border-color);
+        }
+        
+        /* Topics Section */
+        .topics-section {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 2rem 1.5rem;
+        }
+
+        .topics-section h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+        }
+        
+        .topic-buttons button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border-color);
+            background: #fafafa;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .topic-buttons button:hover {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        /* Lesson Display Section */
+        #lesson-display {
+            margin-top: 2rem;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            color: var(--text-dark);
+            line-height: 1.7;
+        }
+        
+        #lesson-display h2 {
+            color: var(--primary-color);
+        }
+
+        .ai-tools {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .ai-tools button {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            background: var(--primary-color);
+            color: var(--white);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+        .ai-tools button:hover {
+            background: var(--sidebar-bg);
+        }
+
+        /* Chatbot Styles */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--white);
+            font-size: 1.2rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-messages .message {
+            padding: 0.8rem 1.2rem;
+            border-radius: 16px;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+
+        .chat-messages .user-message {
+            background: var(--primary-color);
+            color: var(--white);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-messages .bot-message {
+            background: #eef2ff;
+            color: var(--text-dark);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-form {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background: #f9fafb;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            margin-right: 0.5rem;
+            font-size: 1rem;
+        }
+
+        #chat-submit {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: var(--primary-color);
+            color: var(--white);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #chat-submit:hover {
+            background: var(--sidebar-bg);
+        }
+        
+        /* Text Selection Popup */
+        #text-selection-popup {
+            position: absolute;
+            display: none;
+            background: var(--text-dark);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 100;
+        }
+
+    </style>
 </head>
 <body>
-	<div class="sidebar">
-		<h2>Dashboard</h2>
-		<a href="index.html">Home</a>
-		<a href="#">My Progress</a>
-		<a href="login.html">Logout</a>
-	</div>
-	<div class="main-content">
-		<div class="topics-section">
-			<h3>Learning Topics</h3>
-			<ul class="topics-list">
-				<li>Introduction to Python</li>
-				<li>Data Structures</li>
-				<li>Algorithms</li>
-				<li>Web Development Basics</li>
-				<li>Machine Learning Fundamentals</li>
-			</ul>
-		</div>
-	</div>
+    <div class="sidebar">
+        <h2>LearnAI</h2>
+        <a href="index.html">Home</a>
+        <a href="#">My Progress</a>
+        <a href="login.html">Logout</a>
+    </div>
+
+    <div id="text-selection-popup">✨ Explain This</div>
+
+    <div class="dashboard-container">
+        <div class="main-content">
+            <div class="topics-section">
+                <h3>Start a New Lesson</h3>
+                <div class="topic-buttons" id="topic-buttons">
+                    <button data-topic="Introduction to Python">Introduction to Python</button>
+                    <button data-topic="Data Structures in Python">Data Structures in Python</button>
+                    <button data-topic="Web Scraping with Python">Web Scraping with Python</button>
+                    <button data-topic="Machine Learning Concepts">Machine Learning Concepts</button>
+                    <button data-topic="The History of Ancient Rome">The History of Ancient Rome</button>
+                    <button data-topic="Introduction to SQL">Introduction to SQL</button>
+                    <button data-topic="Basics of Quantum Computing">Basics of Quantum Computing</button>
+                    <button data-topic="The Renaissance Period">The Renaissance Period</button>
+                    <button data-topic="Understanding Blockchain">Understanding Blockchain</button>
+                    <button data-topic="Introduction to Psychology">Introduction to Psychology</button>
+                    <button data-topic="The American Civil War">The American Civil War</button>
+                    <button data-topic="Fundamentals of Neuroscience">Fundamentals of Neuroscience</button>
+                    <button data-topic="History of Jazz Music">History of Jazz Music</button>
+                    <button data-topic="Introduction to Astronomy">Introduction to Astronomy</button>
+                    <button data-topic="The Philosophy of Stoicism">The Philosophy of Stoicism</button>
+                    <button data-topic="Basics of Graphic Design">Basics of Graphic Design</button>
+                    <button data-topic="World War II">World War II</button>
+                    <button data-topic="Introduction to Economics">Introduction to Economics</button>
+                    <button data-topic="The Industrial Revolution">The Industrial Revolution</button>
+                    <button data-topic="Creative Writing Basics">Creative Writing Basics</button>
+                    <button data-topic="History of Ancient Egypt">History of Ancient Egypt</button>
+                    <button data-topic="Climate Change Science">Climate Change Science</button>
+                    <button data-topic="Introduction to Sociology">Introduction to Sociology</button>
+                    <button data-topic="The French Revolution">The French Revolution</button>
+                    <button data-topic="Digital Marketing Fundamentals">Digital Marketing Fundamentals</button>
+                    <button data-topic="The Cold War">The Cold War</button>
+                    <button data-topic="Graphic Design Fundamentals">Graphic Design Fundamentals</button>
+                    <button data-topic="Music Theory for Beginners">Music Theory for Beginners</button>
+                    <button data-topic="Introduction to Film Making">Introduction to Film Making</button>
+                    <button data-topic="The Art of Public Speaking">The Art of Public Speaking</button>
+                    <button data-topic="Personal Finance and Investing">Personal Finance and Investing</button>
+                    <button data-topic="Introduction to Artificial Intelligence">Introduction to Artificial Intelligence</button>
+                    <button data-topic="Cybersecurity Essentials">Cybersecurity Essentials</button>
+                </div>
+            </div>
+            <div id="lesson-display" style="display: none;">
+                <!-- Generated lesson content will appear here -->
+            </div>
+        </div>
+        <div class="ai-assistant">
+            <div class="chat-container">
+                <div class="chat-header">AI Assistant</div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message bot-message">Hello! I'm your AI assistant. Click a lesson topic to begin, or ask me any question!</div>
+                </div>
+                <form class="chat-input-form" id="chat-form">
+                    <input type="text" id="chat-input" placeholder="Ask me anything..." required>
+                    <button type="submit" id="chat-submit">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
+

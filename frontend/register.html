@@ -4,18 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="style.css">
     <style>
-        .register-container {
-            background: #23272f;
+        body {
+            background: #1f2937;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background: #374151;
             padding: 2rem 2.5rem;
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.12);
             width: 100%;
             max-width: 350px;
-            margin: 2rem auto;
         }
-        .register-container h2 {
+        h2 {
             margin-bottom: 1.5rem;
             color: #fff;
             text-align: center;
@@ -28,24 +35,20 @@
             margin-bottom: 0.5rem;
             color: #d1d5db;
         }
-        input[type="text"], input[type="password"], input[type="email"] {
+        input {
             width: 100%;
             padding: 0.7rem;
-            border: 1px solid #353b48;
+            border: 1px solid #4b5563;
             border-radius: 7px;
             font-size: 1rem;
-            background: #181a1b;
+            background: #1f2937;
             color: #f3f3f3;
-            transition: border 0.2s;
+            box-sizing: border-box;
         }
-        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
-            border-color: #4f8cff;
-            outline: none;
-        }
-        .register-btn {
+        button {
             width: 100%;
             padding: 0.8rem;
-            background: #4f8cff;
+            background: #4f46e5;
             color: #fff;
             border: none;
             border-radius: 7px;
@@ -53,24 +56,23 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .register-btn:hover {
-            background: #2563eb;
+        button:hover {
+            background: #4338ca;
         }
-        .login-link {
+        .link {
             display: block;
             text-align: center;
             margin-top: 1rem;
-            color: #4f8cff;
+            color: #818cf8;
             text-decoration: none;
-            font-size: 0.97rem;
         }
-        .login-link:hover {
+        .link:hover {
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
+    <div class="form-container">
         <h2>Register</h2>
         <form id="registerForm">
             <div class="form-group">
@@ -85,33 +87,35 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required autocomplete="new-password">
             </div>
-            <button class="register-btn" type="submit">Register</button>
+            <button type="submit">Register</button>
         </form>
-        <script>
-        document.getElementById('registerForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                const response = await fetch('/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert('Registration successful! Please log in.');
-                    window.location.href = 'login.html';
-                } else {
-                    alert(data.error || 'Registration failed.');
-                }
-            } catch (err) {
-                alert('An error occurred. Please try again.');
-            }
-        });
-        </script>
-        <a class="login-link" href="login.html">Already have an account? Log in</a>
+        <a class="link" href="login.html">Already have an account? Log in</a>
     </div>
+
+    <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        try {
+            // --- THIS URL IS NOW CORRECTED ---
+            const response = await fetch('http://127.0.0.1:5000/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert('Registration successful! Please log in.');
+                window.location.href = 'login.html';
+            } else {
+                alert(data.error || 'Registration failed.');
+            }
+        } catch (err) {
+            alert('An error occurred. Please try again.');
+        }
+    });
+    </script>
 </body>
 </html>
