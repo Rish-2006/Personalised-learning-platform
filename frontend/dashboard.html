@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>User Dashboard</title>
+	<style>
+		body {
+			margin: 0;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background: #f4f6fb;
+			display: flex;
+			height: 100vh;
+		}
+		.sidebar {
+			width: 220px;
+			background: #2563eb;
+			color: #fff;
+			display: flex;
+			flex-direction: column;
+			padding: 2rem 1rem;
+			box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+		}
+		.sidebar h2 {
+			margin: 0 0 2rem 0;
+			font-size: 1.5rem;
+			text-align: center;
+			letter-spacing: 1px;
+		}
+		.sidebar a {
+			color: #fff;
+			text-decoration: none;
+			padding: 0.8rem 1rem;
+			border-radius: 5px;
+			margin-bottom: 0.7rem;
+			font-size: 1.08rem;
+			transition: background 0.2s;
+		}
+		.sidebar a:hover {
+			background: #1e40af;
+		}
+		.main-content {
+			flex: 1;
+			padding: 2.5rem 3rem;
+			background: #f4f6fb;
+			overflow-y: auto;
+		}
+		.topics-section {
+			background: #fff;
+			border-radius: 10px;
+			box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+			padding: 2rem 1.5rem;
+			max-width: 600px;
+			margin: 0 auto;
+		}
+		.topics-section h3 {
+			margin-top: 0;
+			color: #2563eb;
+			margin-bottom: 1.2rem;
+		}
+		.topics-list {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+		.topics-list li {
+			padding: 0.7rem 0.5rem;
+			border-bottom: 1px solid #e5e7eb;
+			font-size: 1.07rem;
+			color: #333;
+		}
+		.topics-list li:last-child {
+			border-bottom: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="sidebar">
+		<h2>Dashboard</h2>
+		<a href="index.html">Home</a>
+		<a href="#">My Progress</a>
+		<a href="login.html">Logout</a>
+	</div>
+	<div class="main-content">
+		<div class="topics-section">
+			<h3>Learning Topics</h3>
+			<ul class="topics-list">
+				<li>Introduction to Python</li>
+				<li>Data Structures</li>
+				<li>Algorithms</li>
+				<li>Web Development Basics</li>
+				<li>Machine Learning Fundamentals</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>
