@@ -1,0 +1,39 @@
+services:
+  # Frontend Service (Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: - # This tells Defang to use a built-in Nginx setup
+    ports:
+      - target: 80
+        published: 80 # Standard HTTP port, can be 443 for HTTPS
+    networks:
+      - default
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /usr/share/nginx/html
+        read_only: true
+      - type: bind
+        source: ./nginx.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+    # Use a standard, lightweight Nginx image
+    image: nginx:alpine
+
+  # Backend Service (Python/Flask)
+  backend:
+    build: ./backend # Tells Defang to build using the backend/Dockerfile
+    restart: on-failure
+    networks:
+      - default
+    secrets:
+      - source: GOOGLE_API_KEY # Declares that a secret is needed
+
+networks:
+  default:
+
+secrets:
+  GOOGLE_API_KEY:
+    description: "AIzaSyD5WMNV83RGZ_9DN_8LyTD-Xf9D44qYguA"
+

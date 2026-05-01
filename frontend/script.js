@@ -1,234 +1,252 @@
-// --- Constants ---
-const API_BASE_URL = 'http://127.0.0.1:5000/api';
-let currentLessonContent = ''; // Store the current lesson text
-let currentAssessment = null; // Store the current assessment
+// Set the backend API address
+const API_URL = 'http://127.0.0.1:5000';
 
-// --- DOM Event Listeners ---
+// --- Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Attach event listeners when the page is fully loaded
-    const topicButtonsContainer = document.getElementById('topic-buttons');
-    if (topicButtonsContainer) {
-        topicButtonsContainer.addEventListener('click', handleTopicClick);
+    // Attach event listeners to topic buttons
+    const topicButtons = document.getElementById('topic-buttons');
+    if (topicButtons) {
+        topicButtons.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') {
+                const topic = event.target.dataset.topic;
+                generateLesson(topic);
+            }
+        });
     }
 
+    // Attach event listener to the chat form
     const chatForm = document.getElementById('chat-form');
     if (chatForm) {
         chatForm.addEventListener('submit', handleChatSubmit);
     }
 
+    // Text selection popup logic
     const lessonDisplay = document.getElementById('lesson-display');
-    if (lessonDisplay) {
-        lessonDisplay.addEventListener('mouseup', handleTextSelection);
-    }
-
     const popup = document.getElementById('text-selection-popup');
-    if (popup) {
-        popup.addEventListener('click', handleExplainPopupClick);
+    if (lessonDisplay && popup) {
+        lessonDisplay.addEventListener('mouseup', (event) => {
+            const selection = window.getSelection().toString().trim();
+            if (selection) {
+                popup.style.left = `${event.pageX}px`;
+                popup.style.top = `${event.pageY}px`;
+                popup.style.display = 'block';
+                popup.dataset.selectedText = selection;
+            } else {
+                popup.style.display = 'none';
+            }
+        });
+
+        // Hide popup when clicking elsewhere
+        document.addEventListener('mousedown', (event) => {
+            if (!popup.contains(event.target)) {
+                popup.style.display = 'none';
+            }
+        });
+
+        popup.addEventListener('click', () => {
+            const text = popup.dataset.selectedText;
+            explainText(text);
+            popup.style.display = 'none';
+        });
     }
 });
 
-// --- API Helper Function ---
-async function postToApi(endpoint, body) {
+
+// --- Core Functions ---
+
+// Function to generate a new lesson
+async function generateLesson(topic) {
+    const lessonDisplay = document.getElementById('lesson-display');
+    lessonDisplay.style.display = 'block';
+    lessonDisplay.innerHTML = `<h2>Generating Lesson on "${topic}"...</h2><p>Please wait while the AI prepares your content.</p>`;
+
     try {
-        const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        const response = await fetch(`${API_URL}/api/generate_lesson`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify({ topic })
         });
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return await response.json();
+
+        const data = await response.json();
+        lessonDisplay.innerHTML = `
+            <h2>${data.topic}</h2>
+            <div id="lesson-content-text">${data.lesson_content.replace(/\n/g, '<br>')}</div>
+            <div class="ai-tools">
+                <button id="summarize-btn">✨ Get Revision Notes</button>
+                <button id="questions-btn">✨ Take Assessment</button>
+            </div>
+            <div id="revision-notes-container" style="display:none; margin-top: 1.5rem; padding: 1rem; background: #eef2ff; border-radius: 8px;"></div>
+            <div id="assessment-container" style="display:none; margin-top: 1.5rem;"></div>
+        `;
+
+        // Attach event listeners to the new buttons
+        document.getElementById('summarize-btn').addEventListener('click', () => getRevisionNotes(data.lesson_content));
+        document.getElementById('questions-btn').addEventListener('click', () => getAssessment(data.lesson_content));
+
     } catch (error) {
-        console.error(`Error calling API endpoint: ${endpoint}`, error);
-        throw error; // Re-throw the error to be handled by the caller
+        console.error('Failed to generate lesson:', error);
+        lessonDisplay.innerHTML = `<h2>Error</h2><p>Sorry, we couldn't generate the lesson. Please try again later.</p>`;
     }
 }
 
-// --- Chat Functionality ---
+// Function to handle chat submissions
 async function handleChatSubmit(event) {
     event.preventDefault();
     const chatInput = document.getElementById('chat-input');
     const userMessage = chatInput.value.trim();
     if (!userMessage) return;
 
-    appendMessage(userMessage, 'user-message');
+    addMessageToChat('user-message', userMessage);
     chatInput.value = '';
-    const loadingMessage = appendMessage('Thinking...', 'bot-message');
+
+    const botMessageElem = addMessageToChat('bot-message', 'Thinking...');
 
     try {
-        const data = await postToApi('chat', { message: userMessage });
-        loadingMessage.textContent = data.reply;
+        const response = await fetch(`${API_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage })
+        });
+        const data = await response.json();
+        botMessageElem.textContent = data.reply;
     } catch (error) {
-        loadingMessage.textContent = 'Sorry, I encountered an error. Please try again.';
+        console.error('Chat error:', error);
+        botMessageElem.textContent = 'Sorry, I encountered an error. Please try again.';
     }
-    scrollToBottom('chat-messages');
 }
 
-function appendMessage(text, className) {
+// Function to get revision notes
+async function getRevisionNotes(lessonContent) {
+    const notesContainer = document.getElementById('revision-notes-container');
+    notesContainer.style.display = 'block';
+    notesContainer.innerHTML = `<h3>Revision Notes</h3><p>Generating summary...</p>`;
+    
+    try {
+        const response = await fetch(`${API_URL}/api/revision_notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: lessonContent })
+        });
+        const data = await response.json();
+        notesContainer.innerHTML = `<h3>Revision Notes</h3><div>${data.notes.replace(/\n/g, '<br>')}</div>`;
+    } catch (error) {
+        console.error('Failed to get revision notes:', error);
+        notesContainer.innerHTML = `<h3>Error</h3><p>Sorry, I couldn't create a summary.</p>`;
+    }
+}
+
+// Function to get an assessment
+async function getAssessment(lessonContent) {
+    const assessmentContainer = document.getElementById('assessment-container');
+    assessmentContainer.style.display = 'block';
+    assessmentContainer.innerHTML = `<h3>Practice Questions</h3><p>Generating assessment...</p>`;
+
+    try {
+        const response = await fetch(`${API_URL}/api/generate_assessment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: lessonContent })
+        });
+        const data = JSON.parse(await response.json()); // The backend sends a JSON string
+        
+        if (data.questions && data.questions.length > 0) {
+            let assessmentHTML = '<h3>Practice Questions</h3><form id="assessment-form">';
+            data.questions.forEach((q, index) => {
+                const safeName = `question-${index}`;
+                assessmentHTML += `<div class="question-block" style="margin-bottom: 1rem;">
+                    <p><strong>${index + 1}. ${q.question}</strong></p>`;
+                q.options.forEach((option, i) => {
+                    const safeId = `q${index}-option${i}`;
+                    assessmentHTML += `<div class="option" style="margin-bottom: 0.5rem;">
+                        <input type="radio" name="${safeName}" value="${option}" id="${safeId}">
+                        <label for="${safeId}" style="margin-left: 0.5rem;">${option}</label>
+                    </div>`;
+                });
+                assessmentHTML += `<input type="hidden" id="answer-${index}" value="${q.answer}"></div>`;
+            });
+            assessmentHTML += `<button type="submit" style="padding: 0.7rem 1.2rem; border: none; background: var(--primary-color); color: var(--white); border-radius: 8px; cursor: pointer;">Submit Answers</button></form><div id="assessment-results" style="margin-top: 1rem; font-weight: bold;"></div>`;
+            assessmentContainer.innerHTML = assessmentHTML;
+
+            document.getElementById('assessment-form').addEventListener('submit', handleAssessmentSubmit);
+        } else {
+            throw new Error("No questions found in response.");
+        }
+    } catch (error) {
+        console.error('Failed to get assessment:', error);
+        assessmentContainer.innerHTML = `<h3>Error</h3><p>Sorry, I couldn't generate practice questions.</p>`;
+    }
+}
+
+// Function to handle submitting the assessment
+function handleAssessmentSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const resultsContainer = document.getElementById('assessment-results');
+    let score = 0;
+    const questionCount = form.querySelectorAll('.question-block').length;
+
+    for (let i = 0; i < questionCount; i++) {
+        const correctAnswer = document.getElementById(`answer-${i}`).value;
+        const selectedOption = form.querySelector(`input[name="question-${i}"]:checked`);
+        
+        // Give feedback on each question
+        const questionBlock = selectedOption.closest('.question-block');
+        const options = questionBlock.querySelectorAll('.option');
+        options.forEach(opt => {
+            const label = opt.querySelector('label');
+            if(label.innerText === correctAnswer) {
+                label.style.color = 'green';
+                label.style.fontWeight = 'bold';
+            }
+            if(selectedOption && label.innerText === selectedOption.value && selectedOption.value !== correctAnswer) {
+                 label.style.color = 'red';
+            }
+        });
+        
+        if (selectedOption && selectedOption.value === correctAnswer) {
+            score++;
+        }
+    }
+    
+    resultsContainer.innerHTML = `<h4>Your Result: ${score} out of ${questionCount}</h4>`;
+}
+
+// Function to explain selected text via the AI Assistant
+function explainText(text) {
+    const prompt = `Can you please explain this concept in simple terms: "${text}"`;
+    addMessageToChat('user-message', prompt);
+    const botMessageElem = addMessageToChat('bot-message', 'Thinking...');
+    
+    fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: prompt })
+    })
+    .then(response => response.json())
+    .then(data => {
+        botMessageElem.textContent = data.reply;
+    })
+    .catch(error => {
+        console.error('Explain text error:', error);
+        botMessageElem.textContent = 'Sorry, an error occurred while trying to explain this.';
+    });
+}
+
+
+// --- Helper Functions ---
+
+// Helper to add a message to the chat window
+function addMessageToChat(className, text) {
     const chatMessages = document.getElementById('chat-messages');
     const messageElem = document.createElement('div');
     messageElem.className = `message ${className}`;
     messageElem.textContent = text;
     chatMessages.appendChild(messageElem);
-    scrollToBottom('chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to the latest message
     return messageElem;
-}
-
-// --- Lesson Generation ---
-async function handleTopicClick(event) {
-    if (event.target.tagName !== 'BUTTON') return;
-
-    const topic = event.target.dataset.topic;
-    const lessonDisplay = document.getElementById('lesson-display');
-    lessonDisplay.style.display = 'block';
-    lessonDisplay.innerHTML = `<h2>Loading lesson on "${topic}"...</h2><p>Please wait while the AI generates your personalized content.</p>`;
-    
-    try {
-        const data = await postToApi('generate_lesson', { topic });
-        currentLessonContent = data.lesson_content; // Save lesson content
-        renderLesson(data.topic, data.lesson_content);
-    } catch (error) {
-        lessonDisplay.innerHTML = `<h2>Error</h2><p>Sorry, we couldn't generate the lesson. Please try again later.</p>`;
-    }
-}
-
-function renderLesson(topic, content) {
-    const lessonDisplay = document.getElementById('lesson-display');
-    // Basic formatting for presentation
-    const formattedContent = content.replace(/\n/g, '<br>');
-    lessonDisplay.innerHTML = `
-        <h2>${topic}</h2>
-        <div id="lesson-text-content">${formattedContent}</div>
-        <div class="ai-tools">
-            <button id="summarize-btn">✨ Get Revision Notes</button>
-            <button id="practice-btn">📝 Take Assessment</button>
-        </div>
-        <div id="revision-notes-container" style="display:none;"></div>
-        <div id="assessment-container" style="display:none;"></div>
-    `;
-    // Add event listeners to the new buttons
-    document.getElementById('summarize-btn').addEventListener('click', handleSummarizeClick);
-    document.getElementById('practice-btn').addEventListener('click', handlePracticeClick);
-}
-
-// --- AI Tools for Lessons ---
-async function handleSummarizeClick() {
-    const notesContainer = document.getElementById('revision-notes-container');
-    notesContainer.style.display = 'block';
-    notesContainer.innerHTML = '<h3>Generating Revision Notes...</h3>';
-    try {
-        const data = await postToApi('revision_notes', { text: currentLessonContent });
-        notesContainer.innerHTML = `<h3>Revision Notes</h3><div>${data.notes.replace(/\n/g, '<br>')}</div>`;
-    } catch (error) {
-        notesContainer.innerHTML = '<h3>Error</h3><p>Could not generate revision notes.</p>';
-    }
-}
-
-async function handlePracticeClick() {
-    const assessmentContainer = document.getElementById('assessment-container');
-    assessmentContainer.style.display = 'block';
-    assessmentContainer.innerHTML = '<h3>Generating Assessment...</h3>';
-    try {
-        let data = await postToApi('generate_assessment', { text: currentLessonContent });
-        // The backend returns a stringified JSON, so we need to parse it
-        currentAssessment = JSON.parse(data); 
-        renderAssessment(currentAssessment);
-    } catch (error) {
-        assessmentContainer.innerHTML = '<h3>Error</h3><p>Could not generate the assessment.</p>';
-    }
-}
-
-// --- Assessment Rendering and Logic ---
-function renderAssessment(assessment) {
-    const assessmentContainer = document.getElementById('assessment-container');
-    let questionsHtml = assessment.questions.map((q, index) => `
-        <div class="question" id="question-${index}">
-            <p><strong>${index + 1}. ${q.question}</strong></p>
-            ${q.options.map(opt => `
-                <label>
-                    <input type="radio" name="question-${index}" value="${opt}">
-                    ${opt}
-                </label>
-            `).join('')}
-        </div>
-    `).join('');
-
-    assessmentContainer.innerHTML = `
-        <h3>Assessment</h3>
-        <form id="assessment-form">
-            ${questionsHtml}
-            <button type="submit" class="ai-tools-button">Submit Answers</button>
-        </form>
-        <div id="assessment-results" style="display:none;"></div>
-    `;
-    document.getElementById('assessment-form').addEventListener('submit', handleSubmitAssessment);
-}
-
-function handleSubmitAssessment(event) {
-    event.preventDefault();
-    const resultsContainer = document.getElementById('assessment-results');
-    resultsContainer.style.display = 'block';
-
-    let score = 0;
-    currentAssessment.questions.forEach((q, index) => {
-        const form = event.target;
-        const selectedOption = form.querySelector(`input[name="question-${index}"]:checked`);
-        if (selectedOption && selectedOption.value === q.answer) {
-            score++;
-        }
-    });
-
-    resultsContainer.innerHTML = `
-        <h3>Assessment Results</h3>
-        <p>You scored <strong>${score} out of ${currentAssessment.questions.length}</strong>.</p>
-    `;
-}
-
-
-// --- Text Selection Popup ---
-function handleTextSelection() {
-    const popup = document.getElementById('text-selection-popup');
-    const selection = window.getSelection();
-    const selectedText = selection.toString().trim();
-
-    if (selectedText.length > 5) { // Only show for meaningful selections
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        popup.style.top = `${rect.top + window.scrollY - popup.offsetHeight - 5}px`;
-        popup.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (popup.offsetWidth / 2)}px`;
-        popup.style.display = 'block';
-    } else {
-        popup.style.display = 'none';
-    }
-}
-
-async function handleExplainPopupClick() {
-    const popup = document.getElementById('text-selection-popup');
-    const selectedText = window.getSelection().toString().trim();
-    popup.style.display = 'none'; // Hide popup after click
-
-    if (selectedText) {
-        const userMessage = `Can you explain this concept in simpler terms: "${selectedText}"`;
-        appendMessage(userMessage, 'user-message');
-        const loadingMessage = appendMessage('Explaining...', 'bot-message');
-        
-        try {
-            const data = await postToApi('chat', { message: userMessage });
-            loadingMessage.textContent = data.reply;
-        } catch (error) {
-            loadingMessage.textContent = 'Sorry, I couldn\'t explain that. Please try again.';
-        }
-        scrollToBottom('chat-messages');
-    }
-}
-
-
-// --- Utility Functions ---
-function scrollToBottom(elementId) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.scrollTop = element.scrollHeight;
-    }
 }
 

@@ -4,75 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         body {
-            background: #1f2937;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
         }
-        .form-container {
-            background: #374151;
+        /* Using a more specific class to avoid conflicts if style.css has similar generic classes */
+        .login-container {
+             background: #23272f;
             padding: 2rem 2.5rem;
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.12);
             width: 100%;
             max-width: 350px;
+            margin: 2rem auto;
+            color: #f3f3f3;
         }
-        h2 {
+        .login-container h2 {
             margin-bottom: 1.5rem;
-            color: #fff;
             text-align: center;
         }
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #d1d5db;
-        }
-        input {
-            width: 100%;
-            padding: 0.7rem;
-            border: 1px solid #4b5563;
-            border-radius: 7px;
-            font-size: 1rem;
-            background: #1f2937;
-            color: #f3f3f3;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 0.8rem;
-            background: #4f46e5;
-            color: #fff;
-            border: none;
-            border-radius: 7px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #4338ca;
-        }
-        .link {
+        .register-link {
             display: block;
             text-align: center;
             margin-top: 1rem;
-            color: #818cf8;
+            color: #4f8cff;
             text-decoration: none;
         }
-        .link:hover {
+        .register-link:hover {
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <div class="form-container">
+    <div class="login-container">
         <h2>Login</h2>
         <form id="loginForm">
             <div class="form-group">
@@ -83,33 +51,34 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
-            <button type="submit">Login</button>
+            <button class="login-btn" type="submit">Login</button>
         </form>
-        <a class="link" href="register.html">Don't have an account? Register</a>
+        <a class="register-link" href="register.html">Don't have an account? Register</a>
     </div>
-
     <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        try {
-            // --- THIS URL IS NOW CORRECTED ---
-            const response = await fetch('http://127.0.0.1:5000/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-            if (response.ok) {
-                window.location.href = 'dashboard.html';
-            } else {
-                alert(data.error || 'Login failed.');
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                // The URL now points directly to your backend server on port 5000
+                const response = await fetch('http://127.0.0.1:5000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Login failed.');
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
             }
-        } catch (error) {
-            alert('An error occurred. Please try again.');
-        }
-    });
+        });
     </script>
 </body>
 </html>
+
