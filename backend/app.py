@@ -10,28 +10,31 @@ from database import db, User, Lesson
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 import os
-import google.generativeai as genai
+# UPDATED IMPORT: Using the new future-proof SDK
+from google import genai
 
 # --- Configuration ---
 app = Flask(__name__)
 CORS(app)
 bcrypt = Bcrypt(app)
+# Note: In production, consider using a persistent PostgreSQL database on Render
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///learning_platform.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 # --- AI Model Initialization ---
-model = None
+client = None
+MODEL_NAME = "gemini-1.5-flash"  # You can also use "gemini-2.0-flash" here
+
 try:
-    # Configure the Gemini API client (now reads from .env)
+    # Configure the Gemini API client (reads from Render Environment Variables)
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
-        print("!!! WARNING: GOOGLE_API_KEY not found in .env file. AI features will be disabled.")
+        print("!!! WARNING: GOOGLE_API_KEY not found. AI features will be disabled.")
     else:
-        genai.configure(api_key=api_key)
-        # Use the latest, correct model name
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        print("--- Gemini AI Model Initialized Successfully ---")
+        # UPDATED INITIALIZATION: Using the new Client object
+        client = genai.Client(api_key=api_key)
+        print(f"--- Gemini AI Client Initialized Successfully ({MODEL_NAME}) ---")
 except Exception as e:
     print(f"!!! CRITICAL ERROR: Could not configure Gemini API: {e}")
 
@@ -39,7 +42,7 @@ except Exception as e:
 # --- API Routes ---
 @app.route('/')
 def home():
-    return 'Hello, World!'
+    return 'Learning Platform API is Live!'
 
 # User registration route
 @app.route('/register', methods=['POST'])
@@ -63,7 +66,7 @@ def register():
         return jsonify({'message': f'User {username} registered successfully!'})
     except Exception as e:
         print(f"!!! REGISTER ERROR: {e}")
-        return jsonify({'error': f'An internal error occurred.'}), 500
+        return jsonify({'error': 'An internal error occurred.'}), 500
 
 # User login route
 @app.route('/login', methods=['POST'])
@@ -80,19 +83,21 @@ def login():
         return jsonify({'message': f'User {username} logged in successfully!'})
     except Exception as e:
         print(f"!!! LOGIN ERROR: {e}")
-        return jsonify({'error': f'An internal error occurred.'}), 500
+        return jsonify({'error': 'An internal error occurred.'}), 500
 
 # AI Chatbot Route
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    if not model:
-        return jsonify({'error': 'AI model is not configured correctly.'}), 500
+    if not client:
+        return jsonify({'error': 'AI client is not configured correctly.'}), 500
     try:
         data = request.get_json()
         user_message = data.get('message')
         if not user_message:
             return jsonify({'error': 'Message is required'}), 400
-        response = model.generate_content(user_message)
+        
+        # UPDATED CALL: Using client.models.generate_content
+        response = client.models.generate_content(model=MODEL_NAME, contents=user_message)
         return jsonify({'reply': response.text})
     except Exception as e:
         print(f"!!! CHAT ERROR: {e}")
@@ -101,15 +106,17 @@ def chat():
 # Lesson Generation Route
 @app.route('/api/generate_lesson', methods=['POST'])
 def generate_lesson():
-    if not model:
-        return jsonify({'error': 'AI model is not configured correctly.'}), 500
+    if not client:
+        return jsonify({'error': 'AI client is not configured correctly.'}), 500
     try:
         data = request.get_json()
         topic = data.get('topic')
         if not topic:
             return jsonify({'error': 'Topic is required'}), 400
         prompt = f"Generate a detailed, beginner-friendly lesson on the topic: {topic}. The lesson should be well-structured with clear explanations, headings, and bullet points."
-        response = model.generate_content(prompt)
+        
+        # UPDATED CALL
+        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
         return jsonify({'topic': topic, 'lesson_content': response.text})
     except Exception as e:
         print(f"!!! LESSON GENERATION ERROR: {e}")
@@ -118,15 +125,17 @@ def generate_lesson():
 # Revision Notes Route
 @app.route('/api/revision_notes', methods=['POST'])
 def revision_notes():
-    if not model:
-        return jsonify({'error': 'AI model is not configured correctly.'}), 500
+    if not client:
+        return jsonify({'error': 'AI client is not configured correctly.'}), 500
     try:
         data = request.get_json()
         text = data.get('text')
         if not text:
             return jsonify({'error': 'Lesson content is required'}), 400
         prompt = f"Create a concise set of revision notes in bullet points for the following lesson:\n\n{text}"
-        response = model.generate_content(prompt)
+        
+        # UPDATED CALL
+        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
         return jsonify({'notes': response.text})
     except Exception as e:
         print(f"!!! REVISION NOTES ERROR: {e}")
@@ -135,8 +144,8 @@ def revision_notes():
 # Assessment Generation Route
 @app.route('/api/generate_assessment', methods=['POST'])
 def generate_assessment():
-    if not model:
-        return jsonify({'error': 'AI model is not configured correctly.'}), 500
+    if not client:
+        return jsonify({'error': 'AI client is not configured correctly.'}), 500
     try:
         data = request.get_json()
         text = data.get('text')
@@ -150,7 +159,9 @@ def generate_assessment():
         Lesson content:
         {text}
         """
-        response = model.generate_content(prompt)
+        
+        # UPDATED CALL
+        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
         cleaned_response = response.text.strip().replace('```json', '').replace('```', '')
         return jsonify(cleaned_response)
     except Exception as e:
@@ -160,6 +171,6 @@ def generate_assessment():
 # --- Main Execution ---
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all() # This will create the database tables if they don't exist
+        db.create_all() # This creates database tables locally
+    # Note: Render ignores app.run() and uses the "Start Command" instead
     app.run(debug=True)
-
