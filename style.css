@@ -1,0 +1,199 @@
+/* Light/Dark mode styles */
+.light-mode {
+	background: var(--neutral-light, #f4f6fb) !important;
+	color: var(--text-dark, #23272f) !important;
+}
+.dark-mode {
+	background: var(--neutral-dark, #181a1b) !important;
+	color: var(--text-light, #f3f3f3) !important;
+}
+/* Minimalistic dashboard layout with Flexbox */
+.dashboard-flex {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2rem;
+	padding: 2.5rem 1rem;
+}
+
+.dashboard-card {
+	background: #23272f;
+	/* fallback if var not set */
+	background: var(--neutral-dark, #23272f);
+	color: var(--text-light, #f3f3f3);
+	border-radius: 12px;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+	padding: 1.7rem 1.3rem;
+	margin-bottom: 0.5rem;
+	width: 100%;
+	max-width: 600px;
+	transition: box-shadow 0.2s;
+}
+.dashboard-card:not(:last-child) {
+	margin-bottom: 1.5rem;
+}
+
+body {
+	/* ...existing code... */
+	background: var(--neutral-dark, #181a1b);
+}
+/* Soft elegant shadow */
+.soft-shadow {
+	box-shadow: 0 4px 24px rgba(30, 34, 40, 0.13);
+}
+/* Fade-in animation */
+.fade-in {
+	opacity: 0;
+	animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+/* Animated button styles */
+.modern-btn {
+	background: var(--main-color, #2563eb);
+	color: var(--text-light, #f3f3f3);
+	border: none;
+	border-radius: 7px;
+	padding: 0.8rem 2rem;
+	font-size: 1.08rem;
+	cursor: pointer;
+	transition: background 0.22s, transform 0.22s;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.modern-btn:hover, .modern-btn:focus {
+	background: var(--accent-color, #f59e42);
+	transform: scale(1.07);
+	outline: none;
+}
+/* Modern color palette */
+:root {
+	--main-color: #2563eb;         /* Main blue */
+	--accent-color: #f59e42;       /* Accent orange */
+	--neutral-light: #f4f6fb;      /* Light background */
+	--neutral-dark: #181a1b;       /* Dark background */
+	--text-light: #f3f3f3;         /* Light text */
+	--text-dark: #23272f;           /* Dark text */
+}
+/* Modern login form styles */
+.login-container {
+	background: #23272f;
+	padding: 2rem 2.5rem;
+	border-radius: 12px;
+	box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+	width: 100%;
+	max-width: 350px;
+	margin: 2rem auto;
+}
+.login-container h2 {
+	margin-bottom: 1.5rem;
+	color: #fff;
+	text-align: center;
+}
+.form-group {
+	margin-bottom: 1.2rem;
+}
+label {
+	display: block;
+	margin-bottom: 0.5rem;
+	color: #d1d5db;
+}
+input[type="text"], input[type="password"] {
+	width: 100%;
+	padding: 0.7rem;
+	border: 1px solid #353b48;
+	border-radius: 7px;
+	font-size: 1rem;
+	background: #181a1b;
+	color: #f3f3f3;
+	transition: border 0.2s;
+}
+input[type="text"]:focus, input[type="password"]:focus {
+	border-color: #4f8cff;
+	outline: none;
+}
+.login-btn {
+	width: 100%;
+	padding: 0.8rem;
+	background: #4f8cff;
+	color: #fff;
+	border: none;
+	border-radius: 7px;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.login-btn:hover {
+	background: #2563eb;
+}
+
+/* Card-like lesson/topic box */
+.lesson-card, .topic-card {
+	background: #23272f;
+	border-radius: 12px;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+	padding: 1.7rem 1.3rem;
+	margin-bottom: 1.5rem;
+	color: #f3f3f3;
+	transition: box-shadow 0.2s;
+}
+.lesson-card:hover, .topic-card:hover {
+	box-shadow: 0 6px 24px rgba(0,0,0,0.16);
+}
+/* Dashboard grid layout */
+.dashboard-grid {
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	min-height: 100vh;
+}
+
+.sidebar {
+	background: #23272f;
+	color: #fff;
+	padding: 2rem 1rem;
+	min-width: 180px;
+	max-width: 240px;
+	box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+}
+
+.main-content {
+	background: #181a1b;
+	padding: 2.5rem 3rem;
+	color: #f3f3f3;
+}
+
+@media (max-width: 700px) {
+	.dashboard-grid {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto 1fr;
+	}
+	.sidebar {
+		grid-column: 1 / -1;
+		grid-row: 1;
+		min-width: 0;
+		max-width: none;
+		width: 100%;
+		box-shadow: none;
+		padding: 1rem 0.5rem;
+		text-align: center;
+	}
+	.main-content {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		padding: 1.2rem 0.7rem;
+	}
+}
+/* Basic site-wide styles */
+* {
+	box-sizing: border-box;
+}
+
+body {
+	font-family: Arial, sans-serif;
+	background: #181a1b;
+	color: #f3f3f3;
+	margin: 0;
+	padding: 0;
+}
