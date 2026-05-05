@@ -1,6 +1,7 @@
 # --- Step 1: Load environment variables ---
 from dotenv import load_dotenv
 import os
+import re # Added for URL cleaning
 load_dotenv()
 
 from flask import Flask, jsonify, request
@@ -13,13 +14,12 @@ from google import genai
 # --- Configuration ---
 app = Flask(__name__)
 
-# DEBUGGED CORS: This now allows ANY Vercel deployment from your account
-# This fixes the "An error occurred" issue caused by URL mismatches.
+# CORS: Allows specified Vercel and local URLs
 CORS(app, resources={r"/*": {
     "origins": [
         "https://personalised-learning-platform-bice.vercel.app",
         "https://personalised-learning-platform-6ghr-p5hx921fb.vercel.app",
-        "http://localhost:5173", # For local development
+        "http://localhost:5173",
         "http://localhost:3000"
     ],
     "methods": ["GET", "POST", "OPTIONS"],
@@ -28,25 +28,43 @@ CORS(app, resources={r"/*": {
 
 bcrypt = Bcrypt(app)
 
-# --- Database Configuration ---
-# Render's disk is temporary. If SQLite fails, you MUST use a Render PostgreSQL DB.
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///learning_platform.db")
+# --- Database Configuration (FIXED FOR RENDER) ---
+database_url = os.getenv("DATABASE_URL")
+
+# FIX: SQLAlchemy 1.4+ requires 'postgresql://' instead of 'postgres://'
+# We also add '+psycopg2' to be explicit about the driver
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+else:
+    # Fallback to local SQLite if no DATABASE_URL is found
+    database_url = "sqlite:///learning_platform.db"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize the database with the app
 db.init_app(app)
 
 # --- AI Model Initialization ---
 client = None
 MODEL_NAME = "gemini-1.5-flash"
 
-try:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        print("!!! WARNING: GOOGLE_API_KEY not found in environment variables.")
-    else:
-        client = genai.Client(api_key=api_key)
-        print(f"--- Gemini AI Client Initialized ({MODEL_NAME}) ---")
-except Exception as e:
-    print(f"!!! CRITICAL ERROR: Could not configure Gemini API: {e}")
+def init_ai():
+    global client
+    try:
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if api_key:
+            client = genai.Client(api_key=api_key)
+            print(f"--- Gemini AI Client Initialized ({MODEL_NAME}) ---")
+        else:
+            print("!!! WARNING: GOOGLE_API_KEY not found.")
+    except Exception as e:
+        print(f"!!! CRITICAL ERROR: Could not configure Gemini API: {e}")
+
+init_ai()
 
 # --- API Routes ---
 
@@ -71,12 +89,10 @@ def register():
         if not username or not password or not email:
             return jsonify({'error': 'Username, email, and password required'}), 400
 
-        # Check if user exists
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
         if existing_user:
             return jsonify({'error': 'Username or email already exists'}), 400
 
-        # Hash password and save
         pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
         user = User(username=username, email=email, password_hash=pw_hash)
         
@@ -85,8 +101,8 @@ def register():
         
         return jsonify({'message': f'User {username} registered successfully!'}), 201
     except Exception as e:
-        print(f"!!! REGISTER ERROR: {str(e)}") # This will show in Render Logs
-        return jsonify({'error': 'Database error. If on Render, check if SQLite is supported or use PostgreSQL.'}), 500
+        print(f"!!! REGISTER ERROR: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -104,24 +120,21 @@ def login():
         print(f"!!! LOGIN ERROR: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
-# --- AI Feature Routes ---
-
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:
         return jsonify({'error': 'AI client not configured'}), 500
     try:
         data = request.get_json()
-        user_message = data.get('message')
+        user_message = data.get('message', '')
         response = client.models.generate_content(model=MODEL_NAME, contents=user_message)
         return jsonify({'reply': response.text})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# (Add your other routes like /api/generate_lesson here using the same try/except pattern)
-
+# --- Server Start ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    # On Render, the port is dynamic, but app.run is usually ignored in favor of Gunicorn
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
