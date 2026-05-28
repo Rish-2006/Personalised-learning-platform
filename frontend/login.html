@@ -61,8 +61,11 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             try {
-                // The URL now points directly to your backend server on port 5000
-                const response = await fetch('http://127.0.0.1:5000/login', {
+                const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                    ? 'http://127.0.0.1:5000' 
+                    : 'https://personalised-learning-platform-2.onrender.com';
+                
+                const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
