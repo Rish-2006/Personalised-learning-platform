@@ -14,17 +14,7 @@ from google import genai
 # --- Configuration ---
 app = Flask(__name__)
 
-# CORS: Allows specified Vercel and local URLs
-CORS(app, resources={r"/*": {
-    "origins": [
-        "https://personalised-learning-platform-bice.vercel.app",
-        "https://personalised-learning-platform-6ghr-p5hx921fb.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:3000"
-    ],
-    "methods": ["GET", "POST", "OPTIONS"],
-    "allow_headers": ["Content-Type", "Authorization"]
-}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 bcrypt = Bcrypt(app)
 # --- Database Configuration (FIXED FOR RENDER) ---
