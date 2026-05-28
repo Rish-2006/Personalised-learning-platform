@@ -9,8 +9,6 @@ from flask_sqlalchemy import SQLAlchemy
 from database import db, User, Lesson
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from google import genai
-
 # --- Configuration ---
 app = Flask(__name__)
 
