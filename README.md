@@ -1,5 +1,8 @@
 # Personalized Learning Platform
 
+🚀 **Live Demo:** [https://personalised-learning-platform-bice.vercel.app](https://personalised-learning-platform-bice.vercel.app)  
+⚙️ **Backend API:** [https://personalised-learning-platform-2.onrender.com](https://personalised-learning-platform-2.onrender.com)
+
 An AI-powered, production-ready web application designed to deliver customized learning experiences. This platform leverages AI to generate, adapt, and present educational content tailored to user needs. It features an independent frontend and backend architecture, ready to be deployed on Vercel and Render respectively.
 
 ## ✨ Key Features
