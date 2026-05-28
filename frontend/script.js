@@ -89,7 +89,7 @@ async function generateLesson(topic) {
         const data = await response.json();
         lessonDisplay.innerHTML = `
             <h2>${data.topic}</h2>
-            <div id="lesson-content-text">${data.lesson_content.replace(/\n/g, '<br>')}</div>
+            <div id="lesson-content-text" style="line-height: 1.8;">${marked.parse(data.lesson_content)}</div>
             <div class="ai-tools">
                 <button id="summarize-btn">✨ Get Revision Notes</button>
                 <button id="questions-btn">✨ Take Assessment</button>
@@ -147,7 +147,7 @@ async function getRevisionNotes(lessonContent) {
             body: JSON.stringify({ text: lessonContent })
         });
         const data = await response.json();
-        notesContainer.innerHTML = `<h3>Revision Notes</h3><div>${data.notes.replace(/\n/g, '<br>')}</div>`;
+        notesContainer.innerHTML = `<h3>Revision Notes</h3><div style="line-height: 1.8;">${marked.parse(data.notes)}</div>`;
     } catch (error) {
         console.error('Failed to get revision notes:', error);
         notesContainer.innerHTML = `<h3>Error</h3><p>Sorry, I couldn't create a summary.</p>`;
@@ -227,7 +227,14 @@ function handleAssessmentSubmit(event) {
         }
     }
     
-    resultsContainer.innerHTML = `<h4>Your Result: ${score} out of ${questionCount}</h4>`;
+    const percentage = Math.round((score / questionCount) * 100);
+    const color = percentage >= 80 ? 'green' : (percentage >= 50 ? 'orange' : 'red');
+    resultsContainer.innerHTML = `
+        <div style="padding: 1.5rem; background: #f8fafc; border: 2px solid ${color}; border-radius: 8px; text-align: center; font-size: 1.2rem;">
+            <h4 style="margin:0; color: ${color};">Your Score: ${score} out of ${questionCount} (${percentage}%)</h4>
+            <p style="margin-top: 0.5rem; font-weight: normal;">${percentage >= 80 ? 'Excellent job! 🌟' : 'Keep practicing! 💪'}</p>
+        </div>
+    `;
 }
 
 // Function to explain selected text via the AI Assistant
