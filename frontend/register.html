@@ -78,6 +78,7 @@
 
                 const data = await response.json();
                 if (response.ok) {
+                    localStorage.setItem('username', username);
                     alert('Registration successful! Please log in.');
                     window.location.href = 'login.html';
                 } else {

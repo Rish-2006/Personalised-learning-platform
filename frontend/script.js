@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const myProgressLink = document.getElementById('my-progress-link');
+    if (myProgressLink) {
+        myProgressLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadMyProgress();
+        });
+    }
+
     // Attach event listener to the chat form
     const chatForm = document.getElementById('chat-form');
     if (chatForm) {
@@ -60,14 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to generate a new lesson
 async function generateLesson(topic) {
     const lessonDisplay = document.getElementById('lesson-display');
+    const topicsSection = document.querySelector('.topics-section');
+    if (topicsSection) topicsSection.style.display = 'none';
     lessonDisplay.style.display = 'block';
     lessonDisplay.innerHTML = `<h2>Generating Lesson on "${topic}"...</h2><p>Please wait while the AI prepares your content.</p>`;
+
+    const username = localStorage.getItem('username') || '';
 
     try {
         const response = await fetch(`${API_URL}/api/generate_lesson`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic })
+            body: JSON.stringify({ topic, username })
         });
 
         if (!response.ok) {
@@ -251,5 +263,46 @@ function addMessageToChat(className, text) {
     chatMessages.appendChild(messageElem);
     chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to the latest message
     return messageElem;
+}
+
+// Function to load and display user progress
+async function loadMyProgress() {
+    const lessonDisplay = document.getElementById('lesson-display');
+    const topicsSection = document.querySelector('.topics-section');
+    const username = localStorage.getItem('username') || '';
+    
+    if (topicsSection) topicsSection.style.display = 'none';
+    
+    if (!username) {
+        lessonDisplay.style.display = 'block';
+        lessonDisplay.innerHTML = `<h2>My Progress</h2><p>Please log in to see your progress.</p>`;
+        return;
+    }
+
+    lessonDisplay.style.display = 'block';
+    lessonDisplay.innerHTML = `<h2>Loading Progress...</h2>`;
+
+    try {
+        const response = await fetch(`${API_URL}/api/progress?username=${username}`);
+        const data = await response.json();
+        
+        if (data.progress && data.progress.length > 0) {
+            let html = '<h2>My Progress</h2>';
+            data.progress.forEach(lesson => {
+                html += `
+                    <div style="margin-bottom: 2rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff;">
+                        <h3 style="color: var(--primary-color); margin-top: 0;">${lesson.topic}</h3>
+                        <p>${lesson.content.substring(0, 250).replace(/\\n/g, ' ')}...</p>
+                        <button onclick="generateLesson('${lesson.topic}')" style="margin-top: 1rem; padding: 0.7rem 1.2rem; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer;">Review Lesson</button>
+                    </div>
+                `;
+            });
+            lessonDisplay.innerHTML = html;
+        } else {
+            lessonDisplay.innerHTML = `<h2>My Progress</h2><p>You haven't completed any lessons yet.</p>`;
+        }
+    } catch (error) {
+        lessonDisplay.innerHTML = `<h2>Error</h2><p>Failed to load progress.</p>`;
+    }
 }
 

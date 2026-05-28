@@ -124,6 +124,92 @@ def chat():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/generate_lesson', methods=['POST'])
+def generate_lesson():
+    if not client:
+        return jsonify({'error': 'AI client not configured'}), 500
+    try:
+        data = request.get_json()
+        topic = data.get('topic')
+        username = data.get('username')
+        if not topic:
+            return jsonify({'error': 'Topic required'}), 400
+        
+        prompt = f"Generate a detailed, beginner-friendly lesson on the topic: {topic}. Use headings and bullet points."
+        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+        
+        # Save progress automatically
+        user = User.query.filter_by(username=username).first() if username else User.query.first()
+        if user:
+            lesson = Lesson(topic=topic, content=response.text, user_id=user.id)
+            db.session.add(lesson)
+            db.session.commit()
+
+        return jsonify({'topic': topic, 'lesson_content': response.text})
+    except Exception as e:
+        print(f"LESSON ERROR: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/revision_notes', methods=['POST'])
+def revision_notes():
+    if not client:
+        return jsonify({'error': 'AI client not configured'}), 500
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        if not text:
+            return jsonify({'error': 'Text required'}), 400
+        
+        prompt = f"Create concise revision notes in bullet points for:\n\n{text}"
+        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+        return jsonify({'notes': response.text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/generate_assessment', methods=['POST'])
+def generate_assessment():
+    if not client:
+        return jsonify({'error': 'AI client not configured'}), 500
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        if not text:
+            return jsonify({'error': 'Text required'}), 400
+            
+        prompt = f"""Based on the following lesson, generate a JSON object for a multiple-choice assessment with exactly 3 questions.
+Each question must have an array of 4 options and a field indicating the correct answer's text.
+Format strictly as: {{"questions": [{{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}}]}}
+
+Lesson content:
+{text}"""
+        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+        
+        # Clean JSON response
+        cleaned_text = response.text.strip()
+        if cleaned_text.startswith('```json'):
+            cleaned_text = cleaned_text[7:]
+        if cleaned_text.endswith('```'):
+            cleaned_text = cleaned_text[:-3]
+            
+        return jsonify(cleaned_text.strip())
+    except Exception as e:
+        print(f"ASSESSMENT ERROR: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/progress', methods=['GET'])
+def get_progress():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({'error': 'Username required'}), 400
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+        
+    lessons = Lesson.query.filter_by(user_id=user.id).all()
+    progress_data = [{'topic': l.topic, 'content': l.content} for l in lessons]
+    return jsonify({'progress': progress_data})
+
 # --- Server Start ---
 if __name__ == '__main__':
     with app.app_context():

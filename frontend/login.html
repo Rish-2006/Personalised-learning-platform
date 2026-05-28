@@ -72,6 +72,7 @@
                 });
 
                 if (response.ok) {
+                    localStorage.setItem('username', username);
                     window.location.href = 'dashboard.html';
                 } else {
                     const data = await response.json();
