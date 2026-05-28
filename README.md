@@ -1,135 +1,137 @@
 # Personalized Learning Platform
 
-An AI-powered web application designed to deliver customized learning experiences. This platform uses a crew of AI agents and a stateful graph to generate, adapt, and present educational content tailored to user needs.
+An AI-powered, production-ready web application designed to deliver customized learning experiences. This platform leverages AI to generate, adapt, and present educational content tailored to user needs. It features an independent frontend and backend architecture, ready to be deployed on Vercel and Render respectively.
 
 ## ✨ Key Features
 
--   *🤖 AI-Powered Lesson Generation*: Leverages CrewAI and LangGraph to dynamically create lesson plans on any given topic.
--   *🔐 User Authentication*: Secure user registration and login system using password hashing.
--   *🧠 Adaptive Learning Path*: A simulated adaptive learning loop that can regenerate content based on quiz performance, managed by a LangGraph state machine.
--   *⚙ Modular Backend*: Built with Flask, featuring a clean separation of concerns for the API, database models, and AI logic.
--   *🖥 Simple Frontend*: A clean and straightforward user interface built with HTML, CSS, and vanilla JavaScript.
+- **🤖 AI-Powered Lesson Generation**: Dynamically creates comprehensive lesson plans on any given topic using the Gemini AI model.
+- **🔐 User Authentication**: Secure user registration and login system with password hashing using bcrypt.
+- **📝 Automated Assessments & Revision**: Generates practice quizzes and concise revision notes based on the dynamically created lesson content.
+- **⚙ Modular Architecture**: Independent frontend and backend for seamless, decoupled deployments.
+- **🖥 Interactive UI**: A clean, responsive user interface built with HTML, CSS, and Vanilla JavaScript.
 
 ## 🏛 Architecture Overview
 
-The application is built around a central Flask backend that serves both the frontend pages and a JSON API.
+The application follows a client-server architecture, enabling decoupled deployment:
 
-1.  **Flask Application (app.py): The core of the backend. It handles HTTP requests, manages user authentication (/register, /login), and exposes the AI functionality through the /api/generate_lesson endpoint.
-2.  **Database (database.py): Defines the data models for User and Lesson using Flask-SQLAlchemy, with SQLite as the database engine.
-3.  **AI Crew (ai_crew.py): Sets up a multi-agent system using CrewAI. It defines a Researcher agent to gather information and a Curriculum Designer agent to structure it into a lesson. (Note: The current implementation simulates this and directly uses LangGraph).
-4.  **AI Graph (ai_graph.py): Implements a state machine using LangGraph to manage the lifecycle of a lesson. It moves from generating content to analyzing feedback (a quiz score) and decides whether to regenerate the content or complete the lesson.
-5.  **Frontend (.html files): Static HTML files provide the user interface for the landing page, registration, login, and a user dashboard. JavaScript is used on the registration page to handle form submission asynchronously.
+1. **Frontend (Vercel)**: A lightweight, static SPA (Single Page Application) built with pure HTML, CSS, and JS. It communicates directly with the backend API.
+2. **Backend (Render)**: A RESTful API built with Flask, SQLAlchemy, and Gunicorn. It handles authentication, database interactions, and integrations with the Google Gemini AI model.
+3. **Database**: SQLite (default for development) or PostgreSQL (configured via environment variables for production), managed through Flask-SQLAlchemy.
 
-## 🚀 Getting Started
+---
 
-Follow these instructions to get a local copy of the project up and running.
+## ⚙ Prerequisites & Environment Variables
 
-### Prerequisites
+### System Requirements
+- Python 3.8+
+- Node.js & npm (optional, if you plan to use Vercel CLI)
+- Git
 
--   Python 3.8+
--   pip package manager
--   An OpenAI API Key
+### Environment Variables (.env)
+You will need to set up the following environment variables in your backend to ensure everything functions properly.
 
-### Installation & Setup
+| Variable Name | Description | Default / Example |
+|---------------|-------------|-------------------|
+| `GOOGLE_API_KEY` | Your Google Gemini API Key for AI features | `AIzaSyYourApiKeyHere...` |
+| `DATABASE_URL` | Connection string for your database (optional) | `sqlite:///learning_platform.db` |
 
-1.  *Clone the repository:*
-    bash
-    git clone [https://github.com/your-username/personalized-learning-platform.git](https://github.com/your-username/personalized-learning-platform.git)
-    cd personalized-learning-platform
-    
+---
 
-2.  *Create and activate a virtual environment:*
-    * *macOS/Linux:*
-        bash
-        python3 -m venv venv
-        source venv/bin/activate
-        
-    * *Windows:*
-        bash
-        python -m venv venv
-        .\venv\Scripts\activate
-        
+## 🚀 Local Development Setup
 
-3.  *Install the required dependencies:*
-    bash
-    pip install Flask Flask-SQLAlchemy Flask-Bcrypt Flask-Cors crewai langgraph openai python-dotenv
-    
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/personalized-learning-platform.git
+cd personalized-learning-platform
+```
 
-4.  *Set up environment variables:*
-    Create a file named .env in the root directory of the project and add your OpenAI API key:
-    
-    OPENAI_API_KEY='your-openai-api-key-here'
-    
-    The application uses python-dotenv to load this key automatically.
+### 2. Backend Setup
+```bash
+cd backend
 
-5.  *Initialize the database:*
-    Open a Python shell in your terminal and run the following commands to create the learning_platform.db file and the necessary tables.
-    python
-    from app import app, db
-    with app.app_context():
-        db.create_all()
-    
+# Create and activate a virtual environment
+python -m venv venv
+# macOS/Linux:
+source venv/bin/activate
+# Windows:
+.\venv\Scripts\activate
 
-6.  *Run the Flask application:*
-    bash
-    python app.py
-    
-    The application will be available at http://127.0.0.1:5000.
+# Install dependencies
+pip install -r requirements.txt
 
-##  API Endpoints
+# Create a .env file and add your Google API Key
+echo "GOOGLE_API_KEY=your_google_api_key_here" > .env
 
-The application exposes the following API endpoints:
+# Start the Flask backend
+python app.py
+```
+*The backend API will run at `http://127.0.0.1:5000`.*
 
-#### POST /register
+### 3. Frontend Setup
+```bash
+# Open a new terminal window
+cd frontend
 
-Registers a new user.
+# Open index.html in your browser, or use a local server:
+npx serve .
+```
 
--   *Content-Type*: application/x-www-form-urlencoded or application/json
--   *Body*:
-    json
-    {
-        "username": "newuser",
-        "email": "user@example.com",
-        "password": "strongpassword123"
-    }
-    
--   *Success Response*: {'message': 'User newuser registered successfully!'}
--   *Error Response*: {'error': 'Username or email already exists'}
+---
 
-#### POST /login
+## 🌍 Deployment Guide
 
-Logs in an existing user.
+This project is configured for split deployment: **Frontend on Vercel** and **Backend on Render**.
 
--   *Content-Type*: application/x-www-form-urlencoded
--   *Body*:
-    json
-    {
-        "username": "newuser",
-        "password": "strongpassword123"
-    }
-    
--   *Success Response*: {'message': 'User newuser logged in successfully!'}
--   *Error Response*: {'error': 'Invalid username or password'}
+### Phase 1: Deploy Backend to Render
 
-#### POST /api/generate_lesson
+1. Go to [Render](https://render.com/) and create a new **Web Service**.
+2. Connect your GitHub repository and select the `backend` directory (if Render supports root directories, set the Root Directory to `backend`).
+3. Set the following configuration:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app`
+4. Go to the **Environment** tab and add your variables:
+   - `GOOGLE_API_KEY`: Your Gemini API Key.
+   - `PYTHON_VERSION`: `3.10.0` (or your preferred Python version).
+5. Click **Deploy**. Once successful, copy the provided Render URL (e.g., `https://your-backend.onrender.com`).
 
-Generates a lesson plan for a given topic using the AI graph.
+### Phase 2: Deploy Frontend to Vercel
 
--   *Content-Type*: application/json
--   *Body*:
-    json
-    {
-        "topic": "Introduction to Quantum Mechanics"
-    }
-    
--   *Success Response*:
-    json
-    {
-        "topic": "Introduction to Quantum Mechanics",
-        "lesson_content": "Lesson on: Explain photosynthesis",
-        "quiz_score": 0.85
-    }
-    
-    *Note: The lesson_content currently uses a hardcoded query from ai_graph.py. The quiz_score is randomly generated for demonstration.*
+1. Open `frontend/script.js` in your text editor.
+2. Locate the `API_URL` configuration at the top of the file.
+3. Replace the placeholder URL with your actual deployed Render backend URL:
+   ```javascript
+   const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+       ? 'http://127.0.0.1:5000' 
+       : 'https://your-backend.onrender.com'; // <-- REPLACE THIS
+   ```
+4. Commit and push this change to your repository.
+5. Go to [Vercel](https://vercel.com/) and click **Add New > Project**.
+6. Import your GitHub repository.
+7. In the configuration, set the **Root Directory** to `frontend`.
+8. Leave the Build Command and Output Directory as default (Vercel will detect static files).
+9. Click **Deploy**. Your frontend is now live and communicating with your backend!
 
-## 📂 File Structure
+---
+
+## 📂 Project Structure
+
+```text
+personalized-learning-platform/
+├── backend/
+│   ├── app.py               # Main Flask application and API routes
+│   ├── database.py          # SQLAlchemy database models
+│   ├── requirements.txt     # Python dependencies (includes gunicorn for Render)
+│   └── ...
+├── frontend/
+│   ├── index.html           # Landing page
+│   ├── dashboard.html       # Main application interface
+│   ├── script.js            # Frontend logic and API communication
+│   ├── style.css            # Stylesheets
+│   └── ...
+└── README.md                # Project documentation
+```
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the issues page.

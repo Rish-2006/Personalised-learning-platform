@@ -27,7 +27,6 @@ CORS(app, resources={r"/*": {
 }})
 
 bcrypt = Bcrypt(app)
-
 # --- Database Configuration (FIXED FOR RENDER) ---
 database_url = os.getenv("DATABASE_URL")
 
@@ -47,6 +46,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database with the app
 db.init_app(app)
+
+with app.app_context():
+    db.create_all()
 
 # --- AI Model Initialization ---
 client = None

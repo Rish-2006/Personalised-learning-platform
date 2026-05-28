@@ -1,5 +1,8 @@
 // Set the backend API address
-const API_URL = 'http://127.0.0.1:5000';
+// Use localhost for development. For production on Vercel, this points to your deployed Render backend.
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://127.0.0.1:5000' 
+    : 'https://YOUR_RENDER_BACKEND_URL.onrender.com'; // TODO: Replace YOUR_RENDER_BACKEND_URL with your actual Render URL
 
 // --- Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
