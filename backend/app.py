@@ -170,12 +170,12 @@ Lesson content:
 {text}"""
         response_text = generate_ai_content(prompt)
         
-        # Clean JSON response
-        cleaned_text = response_text.strip()
-        if cleaned_text.startswith('```json'):
-            cleaned_text = cleaned_text[7:]
-        if cleaned_text.endswith('```'):
-            cleaned_text = cleaned_text[:-3]
+        import re
+        match = re.search(r'\{[\s\S]*\}', response_text)
+        if match:
+            cleaned_text = match.group(0)
+        else:
+            cleaned_text = response_text
             
         return jsonify(cleaned_text.strip())
     except Exception as e:
