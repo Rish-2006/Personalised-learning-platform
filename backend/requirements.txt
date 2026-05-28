@@ -2,7 +2,6 @@ Flask
 Flask-SQLAlchemy
 Flask-Bcrypt
 Flask-Cors
-google-genai
 gunicorn
 python-dotenv
 psycopg2-binary

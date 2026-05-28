@@ -40,23 +40,19 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# --- AI Model Initialization ---
-client = None
-MODEL_NAME = "gemini-2.0-flash"
+import urllib.request
+import json
 
-def init_ai():
-    global client
+def generate_ai_content(prompt):
+    url = 'https://text.pollinations.ai/'
+    data = json.dumps({'messages': [{'role': 'user', 'content': prompt}], 'model': 'openai'}).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'})
     try:
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if api_key:
-            client = genai.Client(api_key=api_key)
-            print(f"--- Gemini AI Client Initialized ({MODEL_NAME}) ---")
-        else:
-            print("!!! WARNING: GOOGLE_API_KEY not found.")
+        response = urllib.request.urlopen(req)
+        return response.read().decode('utf-8')
     except Exception as e:
-        print(f"!!! CRITICAL ERROR: Could not configure Gemini API: {e}")
-
-init_ai()
+        print(f"AI Provider Error: {e}")
+        return "An error occurred with the AI provider."
 
 # --- API Routes ---
 
@@ -114,20 +110,16 @@ def login():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    if not client:
-        return jsonify({'error': 'AI client not configured'}), 500
     try:
         data = request.get_json()
         user_message = data.get('message', '')
-        response = client.models.generate_content(model=MODEL_NAME, contents=user_message)
-        return jsonify({'reply': response.text})
+        response_text = generate_ai_content(user_message)
+        return jsonify({'reply': response_text})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/generate_lesson', methods=['POST'])
 def generate_lesson():
-    if not client:
-        return jsonify({'error': 'AI client not configured'}), 500
     try:
         data = request.get_json()
         topic = data.get('topic')
@@ -136,24 +128,22 @@ def generate_lesson():
             return jsonify({'error': 'Topic required'}), 400
         
         prompt = f"Generate a detailed, beginner-friendly lesson on the topic: {topic}. Use headings and bullet points."
-        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+        response_text = generate_ai_content(prompt)
         
         # Save progress automatically
         user = User.query.filter_by(username=username).first() if username else User.query.first()
         if user:
-            lesson = Lesson(topic=topic, content=response.text, user_id=user.id)
+            lesson = Lesson(topic=topic, content=response_text, user_id=user.id)
             db.session.add(lesson)
             db.session.commit()
 
-        return jsonify({'topic': topic, 'lesson_content': response.text})
+        return jsonify({'topic': topic, 'lesson_content': response_text})
     except Exception as e:
         print(f"LESSON ERROR: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/revision_notes', methods=['POST'])
 def revision_notes():
-    if not client:
-        return jsonify({'error': 'AI client not configured'}), 500
     try:
         data = request.get_json()
         text = data.get('text')
@@ -161,15 +151,13 @@ def revision_notes():
             return jsonify({'error': 'Text required'}), 400
         
         prompt = f"Create concise revision notes in bullet points for:\n\n{text}"
-        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
-        return jsonify({'notes': response.text})
+        response_text = generate_ai_content(prompt)
+        return jsonify({'notes': response_text})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/generate_assessment', methods=['POST'])
 def generate_assessment():
-    if not client:
-        return jsonify({'error': 'AI client not configured'}), 500
     try:
         data = request.get_json()
         text = data.get('text')
@@ -182,10 +170,10 @@ Format strictly as: {{"questions": [{{"question": "...", "options": ["...", "...
 
 Lesson content:
 {text}"""
-        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+        response_text = generate_ai_content(prompt)
         
         # Clean JSON response
-        cleaned_text = response.text.strip()
+        cleaned_text = response_text.strip()
         if cleaned_text.startswith('```json'):
             cleaned_text = cleaned_text[7:]
         if cleaned_text.endswith('```'):
