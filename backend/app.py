@@ -42,7 +42,7 @@ with app.app_context():
 
 # --- AI Model Initialization ---
 client = None
-MODEL_NAME = "gemini-1.5-flash"
+MODEL_NAME = "gemini-2.5-flash"
 
 def init_ai():
     global client
